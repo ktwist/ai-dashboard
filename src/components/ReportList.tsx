@@ -1,3 +1,4 @@
+import { generateReportContent } from "../api/openai";
 import { useState } from "react";
 import { useReportStore } from "../store/reportStore";
 import {
@@ -12,6 +13,7 @@ const ReportList = () => {
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
     const [search, setSearch] = useState(""); // Search state
+    const [loadingAI, setLoadingAI] = useState(false);
 
     const handleAdd = () => {
         if (title && content) {
@@ -42,6 +44,18 @@ const ReportList = () => {
         setEditContent("");
     };
 
+    const handleGenerateAI = async () => {
+        if (!title) return;
+        setLoadingAI(true);
+        try {
+            const aiContent = await generateReportContent(title);
+            setContent(aiContent);
+        } catch (err) {
+            alert("Failed to generate content.");
+        }
+        setLoadingAI(false);
+    };
+
     // Filter reports by title (case-insensitive)
     const filteredReports = reports.filter(report =>
         report.title.toLowerCase().includes(search.toLowerCase())
@@ -60,6 +74,9 @@ const ReportList = () => {
                 onChange={value => setContent(value)}
             />
             <Button onClick={handleAdd}>Add Report</Button>
+            <Button onClick={handleGenerateAI} loading={loadingAI} appearance="primary" style={{ marginLeft: 8 }}>
+                Generate with AI
+            </Button>
             <Heading level={5}>Reports</Heading>
             <Input
                 placeholder="Search by Title"
