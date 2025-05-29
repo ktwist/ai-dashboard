@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Container, Content } from 'rsuite';
 import Login from "./components/Login";
 import Dashboard from "./pages/Dashboard";
 
@@ -11,7 +12,9 @@ const AppContent = () => {
 
 const App = () => (
   <AuthProvider>
-    <AppContent />
+    <Container style={{ height: '100vh' }}>
+      <AppContent />
+    </Container>
   </AuthProvider>
 );
 
