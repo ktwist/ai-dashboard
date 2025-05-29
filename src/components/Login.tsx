@@ -51,7 +51,7 @@ const Login = () => {
                         </Button>
                         <Divider>Sample Users</Divider>
                         <Text>
-                            admin123 or user/user123
+                            admin/admin123 or user/user123
                         </Text>
                     </VStack>
                     {error && <Message type="error">
