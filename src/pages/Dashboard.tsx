@@ -1,26 +1,35 @@
+import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
+import ReportList from "../components/ReportList";
+import {
+  Container,
+  Content,
+  Header,
+  Stack,
+  Button,
+  Heading,
+
+} from 'rsuite';
 
 const Dashboard = () => {
   const { role, user, logout } = useAuth();
 
   return (
-    <div>
-      <h2>Welcome, {user}!</h2>
-      {role === "admin" ? (
-        <div>
-          <h3>Admin Dashboard</h3>
-          <p>You have access to admin features.</p>
-          {/* Add admin-specific components or actions here */}
-        </div>
-      ) : (
-        <div>
-          <h3>Viewer Dashboard</h3>
-          <p>You have access to viewer features.</p>
-          {/* Add viewer-specific components or actions here */}
-        </div>
-      )}
-      <button onClick={logout}>Logout</button>
-    </div>
+    <Container>
+      <Header className="page-header">
+        <Stack direction='row' spacing={10} justifyContent="space-between" alignItems="center">
+          {role === "admin" ? (<Heading level={4}>Admin Dashboard</Heading>) : (
+            <Heading level={4}>Viwer Dashboard</Heading>)}
+          <Stack direction='row'>
+            <Heading level={5} style={{ marginRight: 10 }}>{user}</Heading>
+            <Button appearance="ghost" onClick={logout}>Logout</Button>
+          </Stack>
+        </Stack>
+      </Header>
+      <Content>
+        <ReportList />
+      </Content>
+    </Container >
   );
 };
 
