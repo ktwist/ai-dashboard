@@ -1,0 +1,43 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+type Report = {
+    id: number;
+    title: string;
+    content: string;
+};
+
+type ReportStore = {
+  reports: Report[];
+  addReport: (title: string, content: string) => void;
+  removeReport: (id: number) => void;
+  editReport: (id: number, title: string, content: string) => void;
+};
+
+export const useReportStore = create<ReportStore>()(
+  persist(
+    (set) => ({
+      reports: [],
+      addReport: (title, content) =>
+        set((state) => ({
+          reports: [
+            ...state.reports,
+            { id: Date.now(), title, content }
+          ]
+        })),
+      removeReport: (id) =>
+        set((state) => ({
+          reports: state.reports.filter((report) => report.id !== id)
+        })),
+      editReport: (id, title, content) =>
+        set((state) => ({
+          reports: state.reports.map((report) =>
+            report.id === id ? { ...report, title, content } : report
+          )
+        }))
+    }),
+    {
+      name: "report-storage", // unique name in localStorage
+    }
+  )
+);

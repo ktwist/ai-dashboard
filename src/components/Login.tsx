@@ -23,7 +23,6 @@ const Login = () => {
     const [passVisible, setPassVisible] = useState(false);
 
     const handleSubmit = () => {
-        console.log('Enter key pressed!');
         const success = login(username, password);
         if (!success) setError("Invalid credentials");
     };
@@ -35,7 +34,6 @@ const Login = () => {
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
-            console.log('Enter key pressed!');
             handleSubmit();
         }
     };
