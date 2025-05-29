@@ -23,8 +23,8 @@ const Login = () => {
     const [error, setError] = useState("");
     const [passVisible, setPassVisible] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
+        console.log('Enter key pressed!');
         const success = login(username, password);
         if (!success) setError("Invalid credentials");
     };
@@ -32,6 +32,17 @@ const Login = () => {
     const handlePasswordVisibility = () => {
         setPassVisible(!passVisible);
     };
+
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        // console.log('Enter key pressed!', event.key);
+        if (event.key === 'Enter') {
+            console.log('Enter key pressed!');
+            // Your function here
+            handleSubmit();
+        }
+    };
+
     return (
         <Content>
             <Stack alignItems="center" justifyContent="center" style={{ height: '100%' }}>
@@ -41,7 +52,7 @@ const Login = () => {
                         <Input value={username} onChange={value => setUsername(value)} />
                         <Text>Password</Text>
                         <InputGroup inside >
-                            <Input value={password} type={passVisible ? 'text' : 'password'} onChange={value => setPassword(value)} />
+                            <Input value={password} type={passVisible ? 'text' : 'password'} onChange={value => setPassword(value)} onKeyDown={handleKeyDown} />
                             <InputGroup.Button onClick={handlePasswordVisibility}>
                                 {passVisible ? <VisibleIcon /> : <EyeCloseIcon />}
                             </InputGroup.Button>
