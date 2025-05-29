@@ -3,7 +3,6 @@ import { useAuth } from "../context/AuthContext";
 import {
     Text,
     Content,
-    Form,
     Button,
     Panel,
     Stack,
@@ -35,10 +34,8 @@ const Login = () => {
 
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        // console.log('Enter key pressed!', event.key);
         if (event.key === 'Enter') {
             console.log('Enter key pressed!');
-            // Your function here
             handleSubmit();
         }
     };
