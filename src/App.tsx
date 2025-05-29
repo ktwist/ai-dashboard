@@ -1,5 +1,5 @@
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { Container, Content } from 'rsuite';
+import { Container } from 'rsuite';
 import Login from "./components/Login";
 import Dashboard from "./pages/Dashboard";
 
