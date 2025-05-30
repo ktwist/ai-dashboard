@@ -31,7 +31,7 @@ const ReportList = () => {
             console.log(editorRef.current.getContent());
         }
     };
-
+    const mceApiKey = import.meta.env.VITE_TINYMCE_API_KEY;
     const handleAdd = () => {
         setEditingId(null);
         if (title && content) {
@@ -118,7 +118,7 @@ const ReportList = () => {
                         /> */}
                         <>
                             <Editor
-                                apiKey='dcs287m99gmz54gy8yaoodwgrbp2c3arpokhszm2n148gdug'
+                                apiKey={mceApiKey}
                                 onInit={(_evt, editor) => {
                                     editorRef.current = editor as TinyMCEEditorType;
                                 }}
