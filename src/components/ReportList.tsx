@@ -1,5 +1,5 @@
 import { generateReportContent } from "../api/openai";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useReportStore } from "../store/reportStore";
 // import { useAuth } from "../context/AuthContext";
 import {
@@ -10,6 +10,9 @@ import TrashIcon from '@rsuite/icons/Trash';
 import CreativeIcon from '@rsuite/icons/Creative';
 import SearchIcon from '@rsuite/icons/Search';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
+// import { Editor } from '@tinymce/tinymce-react';
+import { Editor } from '@tinymce/tinymce-react';
+import type { Editor as TinyMCEEditorType } from 'tinymce';
 
 const ReportList = () => {
     const { reports, addReport, removeReport, editReport } = useReportStore();
@@ -22,10 +25,19 @@ const ReportList = () => {
     const [loadingAI, setLoadingAI] = useState(false);
     // const { role, user } = useAuth();
 
+    const editorRef = useRef<TinyMCEEditorType | null>(null);
+    const log = () => {
+        if (editorRef.current) {
+            console.log(editorRef.current.getContent());
+        }
+    };
+
     const handleAdd = () => {
         setEditingId(null);
         if (title && content) {
-            addReport(title, content);
+            if (editorRef.current) {
+                addReport(title, editorRef.current.getContent());
+            }
             setTitle("");
             setContent("");
             handleClose()
@@ -33,6 +45,7 @@ const ReportList = () => {
     };
 
     const startEdit = (id: number, currentTitle: string, currentContent: string) => {
+        console.log("editContent || content cuurentTitle ------------>>> ", currentContent, content, currentTitle);
         setEditingId(id);
         setEditTitle(currentTitle);
         setEditContent(currentContent);
@@ -41,7 +54,9 @@ const ReportList = () => {
 
     const handleEditSave = (id: number) => {
         if (editTitle && editContent) {
-            editReport(id, editTitle, editContent);
+            if (editorRef.current) {
+                editReport(id, editTitle, editorRef.current.getContent());
+            }
             setEditingId(null);
             setEditTitle("");
             setEditContent("");
@@ -69,7 +84,9 @@ const ReportList = () => {
     };
 
     const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
+    const handleOpen = () => {
+        setOpen(true);
+    }
     const handleClose = () => {
         handleEditCancel();
         setOpen(false)
@@ -80,8 +97,8 @@ const ReportList = () => {
         report.title.toLowerCase().includes(search.toLowerCase())
     );
 
+    console.log("editContent || content outside ---->>> ", editContent, content);
     return (
-
         <Container>
             <Modal open={open} onClose={handleClose} backdrop="static">
                 <Modal.Header>
@@ -94,11 +111,35 @@ const ReportList = () => {
                             value={editTitle || title}
                             onChange={value => editingId ? setEditTitle(value) : setTitle(value)}
                         />
-                        <Input as="textarea" rows={3}
+                        {/* <Input as="textarea" rows={3}
                             placeholder="Content"
                             value={editContent || content}
                             onChange={value => editingId ? setEditContent(value) : setContent(value)}
-                        />
+                        /> */}
+                        <>
+                            <Editor
+                                apiKey='dcs287m99gmz54gy8yaoodwgrbp2c3arpokhszm2n148gdug'
+                                onInit={(_evt, editor) => {
+                                    editorRef.current = editor as TinyMCEEditorType;
+                                }}
+                                initialValue={editContent}
+                                init={{
+                                    height: 500,
+                                    menubar: false,
+                                    plugins: [
+                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                                    ],
+                                    toolbar: 'undo redo | blocks | ' +
+                                        'bold italic forecolor | alignleft aligncenter ' +
+                                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                                        'removeformat | help',
+                                    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                                }}
+                            />
+                            <button onClick={log}>Log editor content</button>
+                        </>
                         <Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green">
                             Generate with AI
                         </Button>
@@ -141,7 +182,6 @@ const ReportList = () => {
                     </List.Item>
                 ))}
             </List>
-
         </Container >
     );
 };
