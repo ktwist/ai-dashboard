@@ -7,7 +7,6 @@ import {
   Stack,
   Button,
   Heading,
-  Navbar,
 } from 'rsuite';
 
 const Dashboard = () => {

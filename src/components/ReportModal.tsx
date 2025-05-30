@@ -1,10 +1,12 @@
-import { type FC } from "react";
+import type { FC } from "react";
 import { Modal, Stack, Input, Button } from "rsuite";
+import { Editor } from '@tinymce/tinymce-react';
 import CreativeIcon from '@rsuite/icons/Creative';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
 import SaveIcon from '@rsuite/icons/Save';
-import { Editor } from '@tinymce/tinymce-react';
 import type { Editor as TinyMCEEditorType } from 'tinymce';
+
+type Role = "admin" | "viewer" | null;
 
 type ReportModalProps = {
     open: boolean;
@@ -24,6 +26,7 @@ type ReportModalProps = {
     onEditSave: () => void;
     onClose: () => void;
     onContentChange: (content: string) => void;
+    role: Role;
 };
 
 const ReportModal: FC<ReportModalProps> = ({
@@ -44,64 +47,75 @@ const ReportModal: FC<ReportModalProps> = ({
     onEditSave,
     onClose,
     onContentChange,
-}) => (
-    <Modal open={open} onClose={onClose} backdrop="static">
-        <Modal.Header>
-            <Modal.Title>{editingId ? `Edit Report` : `Add Report`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-            <Stack direction='column' spacing={10} alignItems="stretch">
-                <Input
-                    placeholder="Title"
-                    value={editingId ? editTitle : title}
-                    onChange={value => editingId ? onEditTitleChange(value) : onTitleChange(value)}
-                />
-                <Editor
-                    apiKey={mceApiKey}
-                    value={editContent}
-                    onEditorChange={content => onContentChange(content)}
-                    onInit={(_evt, editor) => {
-                        onEditorInit(editor as TinyMCEEditorType);
-                    }}
-                    init={{
-                        height: 500,
-                        menubar: false,
-                        plugins: [
-                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                        ],
-                        toolbar: 'undo redo | blocks | ' +
-                            'bold italic forecolor | alignleft aligncenter ' +
-                            'alignright alignjustify | bullist numlist outdent indent | ' +
-                            'removeformat | help',
-                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                    }}
-                />
-                {!editingId &&
-                    <Input as="textarea" rows={3}
-                        placeholder="Enter report idea here to generate content"
-                        value={promptText}
-                        onChange={onPromptTextChange}
-                    />}
-                {editingId ?
-                    (<Button startIcon={<CreativeIcon />} onClick={onGenerateAI} loading={loadingAI} appearance="primary" color="green" >
-                        Summarize with AI
-                    </Button>) :
-                    (<Button startIcon={<CreativeIcon />} onClick={onGenerateAI} loading={loadingAI} appearance="primary" color="green" disabled={!promptText}>
-                        Generate with AI
-                    </Button>)
-                }
-            </Stack>
-        </Modal.Body>
-        <Modal.Footer>
-            {editingId ? <Button startIcon={<SaveIcon />} color="blue" appearance="primary" onClick={onEditSave}>Save Report</Button> :
-                <Button appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={onAdd}>Add Report</Button>}
-            <Button onClick={onClose} appearance="subtle">
-                Cancel
-            </Button>
-        </Modal.Footer>
-    </Modal>
-);
+    role,
+}) => {
+    const isViewer = role === "viewer";
+    return (
+        <Modal open={open} onClose={onClose} backdrop="static">
+            <Modal.Header>
+                <Modal.Title>
+                    {editingId ? `Edit Report` : isViewer ? "View Report" : `Add Report`}
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Stack direction='column' spacing={10} alignItems="stretch">
+                    <Input
+                        placeholder="Title"
+                        value={editingId ? editTitle : title}
+                        onChange={value => editingId ? onEditTitleChange(value) : onTitleChange(value)}
+                        disabled={isViewer}
+                    />
+                    <Editor
+                        apiKey={mceApiKey}
+                        value={editContent}
+                        onEditorChange={content => onContentChange(content)}
+                        onInit={(_evt, editor) => {
+                            onEditorInit(editor as TinyMCEEditorType);
+                        }}
+                        init={{
+                            height: 500,
+                            menubar: false,
+                            plugins: [
+                                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                            ],
+                            toolbar: 'undo redo | blocks | ' +
+                                'bold italic forecolor | alignleft aligncenter ' +
+                                'alignright alignjustify | bullist numlist outdent indent | ' +
+                                'removeformat | help',
+                            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                        }}
+                        disabled={isViewer}
+                    />
+                    {!editingId && !isViewer &&
+                        <Input as="textarea" rows={3}
+                            placeholder="Enter report idea here to generate content"
+                            value={promptText}
+                            onChange={value => onPromptTextChange(value)}
+                            disabled={isViewer}
+                        />}
+                    {!isViewer && (editingId ?
+                        (<Button startIcon={<CreativeIcon />} onClick={onGenerateAI} loading={loadingAI} appearance="primary" color="green" >
+                            Summarize with AI
+                        </Button>) :
+                        (<Button startIcon={<CreativeIcon />} onClick={onGenerateAI} loading={loadingAI} appearance="primary" color="green" disabled={!promptText}>
+                            Generate with AI
+                        </Button>)
+                    )}
+                </Stack>
+            </Modal.Body>
+            <Modal.Footer>
+                {!isViewer && (editingId ?
+                    <Button startIcon={<SaveIcon />} color="blue" appearance="primary" onClick={onEditSave}>Save Report</Button> :
+                    <Button appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={onAdd}>Add Report</Button>
+                )}
+                <Button onClick={onClose} appearance="subtle">
+                    {isViewer ? "Close" : "Cancel"}
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+};
 
 export default ReportModal;
