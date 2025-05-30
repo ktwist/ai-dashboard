@@ -62,6 +62,12 @@ AI Dashboard is a React-based web application for managing reports with role-bas
 
 ---
 
+## Known limitation
+   - openAI integration is untested due to the lack of propper key
+   - Drag and drop implemented using default list functionality of RSuite library
+   - ReportList should be divided to more components
+   - User roles implementation is implemented as example for view / edit capabilities
+
 ## License
 
 This project is for demonstration and educational purposes.
