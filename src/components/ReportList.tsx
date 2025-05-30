@@ -3,16 +3,13 @@ import { useState, useRef } from "react";
 import { useReportStore } from "../store/reportStore";
 // import { useAuth } from "../context/AuthContext";
 import {
-    Container, Input, Heading, Button, List, Stack, Modal, IconButton, InputGroup, Divider
+    Container, Input, Heading, Button, List, Stack, IconButton, InputGroup, Divider
 } from 'rsuite';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
-import CreativeIcon from '@rsuite/icons/Creative';
+import ReportModal from "./ReportModal";
 import SearchIcon from '@rsuite/icons/Search';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
-import SaveIcon from '@rsuite/icons/Save';
-// import { Editor } from '@tinymce/tinymce-react';
-import { Editor } from '@tinymce/tinymce-react';
 import type { Editor as TinyMCEEditorType } from 'tinymce';
 
 const ReportList = () => {
@@ -99,68 +96,26 @@ const ReportList = () => {
         report.title.toLowerCase().includes(search.toLowerCase())
     );
 
-    console.log("editContent || content outside ---->>> ", editContent, content);
     return (
         <Container>
-            <Modal open={open} onClose={handleClose} backdrop="static">
-                <Modal.Header>
-                    <Modal.Title>{editingId ? `Edit Report` : `Add Report`}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Stack direction='column' spacing={10} alignItems="stretch">
-                        <Input
-                            placeholder="Title"
-                            value={editTitle || title}
-                            onChange={value => editingId ? setEditTitle(value) : setTitle(value)}
-                        />
-                        <>
-                            <Editor
-                                apiKey={mceApiKey}
-                                onInit={(_evt, editor) => {
-                                    editorRef.current = editor as TinyMCEEditorType;
-                                }}
-                                initialValue={editContent}
-                                init={{
-                                    height: 500,
-                                    menubar: false,
-                                    plugins: [
-                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                                    ],
-                                    toolbar: 'undo redo | blocks | ' +
-                                        'bold italic forecolor | alignleft aligncenter ' +
-                                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                                        'removeformat | help',
-                                    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                                }}
-                            />
-                            {/* <button onClick={log}>Log editor content</button> */}
-                        </>
-                        {!editingId &&
-                            <Input as="textarea" rows={3}
-                                placeholder="Enter report idea here to generate content"
-                                value={promptText}
-                                onChange={value => setPromptText(value)}
-                            />}
-                        {editingId ?
-                            (<Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green" >
-                                Summarize with AI
-                            </Button>) :
-                            (<Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green" disabled={!promptText}>
-                                Generate with AI
-                            </Button>)
-                        }
-                    </Stack>
-                </Modal.Body>
-                <Modal.Footer>
-                    {editingId ? <Button startIcon={<SaveIcon />} color="blue" appearance="primary" onClick={() => handleEditSave(editingId)}>Save Report</Button> :
-                        <Button appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={handleAdd}>Add Report</Button>}
-                    <Button onClick={handleClose} appearance="subtle">
-                        Cancel
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+            <ReportModal
+                open={open}
+                editingId={editingId}
+                editTitle={editTitle}
+                editContent={editContent}
+                title={title}
+                promptText={promptText}
+                loadingAI={loadingAI}
+                mceApiKey={mceApiKey}
+                onTitleChange={setTitle}
+                onEditTitleChange={setEditTitle}
+                onPromptTextChange={setPromptText}
+                onEditorInit={editor => { editorRef.current = editor; }}
+                onGenerateAI={handleGenerateAI}
+                onAdd={handleAdd}
+                onEditSave={() => handleEditSave(editingId!)}
+                onClose={handleClose}
+            />
             <Stack direction="row" justifyContent="space-between" alignItems="center" style={{ margin: 20 }}>
                 <Button color="orange" startIcon={<PlusRoundIcon />} onClick={handleOpen} appearance="primary">New Report</Button>
 
