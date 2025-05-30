@@ -72,9 +72,30 @@ const ReportList = () => {
         setLoadingAI(false);
     };
 
-    const filteredReports = reports.filter(report =>
-        report.title.toLowerCase().includes(search.toLowerCase())
+    const filteredReports = (reports ?? []).filter(
+        report =>
+            typeof report?.title === "string" &&
+            report.title.toLowerCase().includes(search.toLowerCase())
     );
+
+    // Handles reordering of reports in the list
+    function handleSortEnd(payload?: { oldIndex: number; newIndex: number }) {
+        if (!payload) return;
+        const { oldIndex, newIndex } = payload;
+        if (oldIndex === newIndex) return;
+
+        const sortedReports = [...reports].sort((a, b) => a.index - b.index);
+
+        const [moved] = sortedReports.splice(oldIndex, 1);
+        sortedReports.splice(newIndex, 0, moved);
+
+        const updatedReports = sortedReports.map((report, idx) => ({
+            ...report,
+            index: idx,
+        }));
+
+        useReportStore.getState().setReports(updatedReports);
+    }
 
     return (
         <Container>
@@ -122,11 +143,14 @@ const ReportList = () => {
             <Divider color="orange" style={{ margin: '40px 0' }}>
                 <Heading level={4} style={{ marginRight: 10 }}>Reports</Heading>
             </Divider>
-            <List sortable bordered style={{ margin: 20 }}>
+            <List sortable={role === "admin"} bordered style={{ margin: 20 }} onSort={handleSortEnd}>
                 {filteredReports.map((report) => (
-                    <List.Item key={report.id} index={report.id} style={{ padding: 10 }}>
+                    <List.Item key={report.id} index={report.index} style={{ padding: 10 }}>
                         <Stack direction='row' justifyContent="space-between" alignItems="center">
-                            <Heading level={6}>{report.title}</Heading>
+                            <Stack direction='row' spacing={10}>
+                                <Heading level={6}>{report.index + 1}</Heading>
+                                <Heading level={6}>{report.title}</Heading>
+                            </Stack>
                             <Stack direction='row' spacing={10}>
                                 {role === "admin" ? (
                                     <>
