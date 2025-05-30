@@ -3,13 +3,14 @@ import { useState, useRef } from "react";
 import { useReportStore } from "../store/reportStore";
 // import { useAuth } from "../context/AuthContext";
 import {
-    Container, Input, Heading, Button, List, Stack, Modal, IconButton, Panel, InputGroup, Divider
+    Container, Input, Heading, Button, List, Stack, Modal, IconButton, InputGroup, Divider
 } from 'rsuite';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import CreativeIcon from '@rsuite/icons/Creative';
 import SearchIcon from '@rsuite/icons/Search';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
+import SaveIcon from '@rsuite/icons/Save';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Editor } from '@tinymce/tinymce-react';
 import type { Editor as TinyMCEEditorType } from 'tinymce';
@@ -18,6 +19,7 @@ const ReportList = () => {
     const { reports, addReport, removeReport, editReport } = useReportStore();
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
+    const [promptText, setPromptText] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
@@ -26,12 +28,9 @@ const ReportList = () => {
     // const { role, user } = useAuth();
 
     const editorRef = useRef<TinyMCEEditorType | null>(null);
-    const log = () => {
-        if (editorRef.current) {
-            console.log(editorRef.current.getContent());
-        }
-    };
+
     const mceApiKey = import.meta.env.VITE_TINYMCE_API_KEY;
+
     const handleAdd = () => {
         setEditingId(null);
         if (title && content) {
@@ -45,7 +44,6 @@ const ReportList = () => {
     };
 
     const startEdit = (id: number, currentTitle: string, currentContent: string) => {
-        console.log("editContent || content cuurentTitle ------------>>> ", currentContent, content, currentTitle);
         setEditingId(id);
         setEditTitle(currentTitle);
         setEditContent(currentContent);
@@ -71,16 +69,20 @@ const ReportList = () => {
     };
 
     const handleGenerateAI = async () => {
-        const promtText = editTitle || title;
-        if (!promtText) return;
+        if (editingId && editorRef.current) {
+            setPromptText(editorRef.current.getContent({ format: 'text' }));
+        }
+        if (!promptText && !editingId) return;
         setLoadingAI(true);
         try {
-            const aiContent = await generateReportContent(promtText);
+            const aiContent = await generateReportContent(promptText);
             editTitle ? setEditContent(aiContent) : setContent(aiContent);
+            editorRef.current?.setContent(aiContent);
         } catch (err) {
             alert("Failed to generate content.");
         }
         setLoadingAI(false);
+        setPromptText("");
     };
 
     const [open, setOpen] = useState(false);
@@ -111,11 +113,6 @@ const ReportList = () => {
                             value={editTitle || title}
                             onChange={value => editingId ? setEditTitle(value) : setTitle(value)}
                         />
-                        {/* <Input as="textarea" rows={3}
-                            placeholder="Content"
-                            value={editContent || content}
-                            onChange={value => editingId ? setEditContent(value) : setContent(value)}
-                        /> */}
                         <>
                             <Editor
                                 apiKey={mceApiKey}
@@ -138,16 +135,27 @@ const ReportList = () => {
                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
                                 }}
                             />
-                            <button onClick={log}>Log editor content</button>
+                            {/* <button onClick={log}>Log editor content</button> */}
                         </>
-                        <Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green">
-                            Generate with AI
-                        </Button>
+                        {!editingId &&
+                            <Input as="textarea" rows={3}
+                                placeholder="Enter report idea here to generate content"
+                                value={promptText}
+                                onChange={value => setPromptText(value)}
+                            />}
+                        {editingId ?
+                            (<Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green" >
+                                Summarize with AI
+                            </Button>) :
+                            (<Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green" disabled={!promptText}>
+                                Generate with AI
+                            </Button>)
+                        }
                     </Stack>
                 </Modal.Body>
                 <Modal.Footer>
-                    {editingId ? <Button onClick={() => handleEditSave(editingId)}>Save Report</Button> :
-                        <Button onClick={handleAdd}>Add Report</Button>}
+                    {editingId ? <Button startIcon={<SaveIcon />} color="blue" appearance="primary" onClick={() => handleEditSave(editingId)}>Save Report</Button> :
+                        <Button appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={handleAdd}>Add Report</Button>}
                     <Button onClick={handleClose} appearance="subtle">
                         Cancel
                     </Button>
