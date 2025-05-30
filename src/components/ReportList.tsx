@@ -10,11 +10,13 @@ import ReportModal from "./ReportModal";
 import SearchIcon from '@rsuite/icons/Search';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
 import type { Editor as TinyMCEEditorType } from 'tinymce';
+import { useAuth } from "../context/AuthContext";
 
 const initialReport = { id: null, title: "", content: "" };
 
 const ReportList = () => {
     const { reports, addReport, removeReport, editReport } = useReportStore();
+    const { role } = useAuth(); // Get the current user role
     const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
     const [current, setCurrent] = useState<{ id: number | null, title: string, content: string }>(initialReport);
     const [promptText, setPromptText] = useState("");
@@ -23,14 +25,24 @@ const ReportList = () => {
     const editorRef = useRef<TinyMCEEditorType | null>(null);
     const mceApiKey = import.meta.env.VITE_TINYMCE_API_KEY;
 
+    // Only allow admins to open add/edit modals
     const openAdd = () => {
+        if (role !== "admin") return;
         setCurrent(initialReport);
         setModalMode('add');
     };
 
     const openEdit = (report: { id: number, title: string, content: string }) => {
+        if (role !== "admin") return;
         setCurrent(report);
         setModalMode('edit');
+    };
+
+    // Allow viewers to open modal in view mode
+    const openView = (report: { id: number, title: string, content: string }) => {
+        if (role !== "viewer") return;
+        setCurrent(report);
+        setModalMode(null); // null means view mode for viewer
     };
 
     const closeModal = () => {
@@ -40,6 +52,7 @@ const ReportList = () => {
     };
 
     const handleSave = () => {
+        if (role !== "admin") return;
         if (modalMode === 'add') {
             addReport(current.title, current.content);
         } else if (modalMode === 'edit' && current.id !== null) {
@@ -66,7 +79,8 @@ const ReportList = () => {
     return (
         <Container>
             <ReportModal
-                open={!!modalMode}
+                role={role}
+                open={!!modalMode || (role === "viewer" && current.id !== null)}
                 editingId={modalMode === 'edit' ? current.id : null}
                 editTitle={current.title}
                 editContent={current.content}
@@ -85,7 +99,15 @@ const ReportList = () => {
                 onClose={closeModal}
             />
             <Stack direction="row" justifyContent="space-between" alignItems="center" style={{ margin: 20 }}>
-                <Button color="orange" startIcon={<PlusRoundIcon />} onClick={openAdd} appearance="primary">New Report</Button>
+                <Button
+                    color="orange"
+                    startIcon={<PlusRoundIcon />}
+                    onClick={openAdd}
+                    appearance="primary"
+                    disabled={role !== "admin"}
+                >
+                    New Report
+                </Button>
                 <InputGroup>
                     <InputGroup.Addon>
                         <SearchIcon />
@@ -106,8 +128,32 @@ const ReportList = () => {
                         <Stack direction='row' justifyContent="space-between" alignItems="center">
                             <Heading level={6}>{report.title}</Heading>
                             <Stack direction='row' spacing={10}>
-                                <IconButton color="green" appearance="primary" icon={<EditIcon />} onClick={() => openEdit(report)} />
-                                <IconButton color="red" appearance="primary" icon={<TrashIcon />} onClick={() => removeReport(report.id)} />
+                                {role === "admin" ? (
+                                    <>
+                                        <IconButton
+                                            color="green"
+                                            appearance="primary"
+                                            icon={<EditIcon />}
+                                            onClick={() => openEdit(report)}
+                                            disabled={role !== "admin"}
+                                        />
+                                        <IconButton
+                                            color="red"
+                                            appearance="primary"
+                                            icon={<TrashIcon />}
+                                            onClick={() => role === "admin" && removeReport(report.id)}
+                                            disabled={role !== "admin"}
+                                        />
+                                    </>
+                                ) : (
+                                    <Button
+                                        appearance="primary"
+                                        size="sm"
+                                        onClick={() => openView(report)}
+                                    >
+                                        View
+                                    </Button>
+                                )}
                             </Stack>
                         </Stack>
                     </List.Item>
