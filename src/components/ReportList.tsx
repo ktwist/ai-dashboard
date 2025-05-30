@@ -1,8 +1,15 @@
+import { generateReportContent } from "../api/openai";
 import { useState } from "react";
 import { useReportStore } from "../store/reportStore";
+// import { useAuth } from "../context/AuthContext";
 import {
-    Container, Input, Heading, Button, List, Stack
+    Container, Input, Heading, Button, List, Stack, Modal, IconButton, Panel, InputGroup, Divider
 } from 'rsuite';
+import EditIcon from '@rsuite/icons/Edit';
+import TrashIcon from '@rsuite/icons/Trash';
+import CreativeIcon from '@rsuite/icons/Creative';
+import SearchIcon from '@rsuite/icons/Search';
+import PlusRoundIcon from '@rsuite/icons/PlusRound';
 
 const ReportList = () => {
     const { reports, addReport, removeReport, editReport } = useReportStore();
@@ -12,12 +19,16 @@ const ReportList = () => {
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
     const [search, setSearch] = useState(""); // Search state
+    const [loadingAI, setLoadingAI] = useState(false);
+    // const { role, user } = useAuth();
 
     const handleAdd = () => {
+        setEditingId(null);
         if (title && content) {
             addReport(title, content);
             setTitle("");
             setContent("");
+            handleClose()
         }
     };
 
@@ -25,6 +36,7 @@ const ReportList = () => {
         setEditingId(id);
         setEditTitle(currentTitle);
         setEditContent(currentContent);
+        handleOpen();
     };
 
     const handleEditSave = (id: number) => {
@@ -34,6 +46,7 @@ const ReportList = () => {
             setEditTitle("");
             setEditContent("");
         }
+        handleClose();
     };
 
     const handleEditCancel = () => {
@@ -42,65 +55,94 @@ const ReportList = () => {
         setEditContent("");
     };
 
+    const handleGenerateAI = async () => {
+        const promtText = editTitle || title;
+        if (!promtText) return;
+        setLoadingAI(true);
+        try {
+            const aiContent = await generateReportContent(promtText);
+            editTitle ? setEditContent(aiContent) : setContent(aiContent);
+        } catch (err) {
+            alert("Failed to generate content.");
+        }
+        setLoadingAI(false);
+    };
+
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => {
+        handleEditCancel();
+        setOpen(false)
+    };
+
     // Filter reports by title (case-insensitive)
     const filteredReports = reports.filter(report =>
         report.title.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
+
         <Container>
-            <Input
-                placeholder="Title"
-                value={title}
-                onChange={value => setTitle(value)}
-            />
-            <Input as="textarea" rows={3}
-                placeholder="Content"
-                value={content}
-                onChange={value => setContent(value)}
-            />
-            <Button onClick={handleAdd}>Add Report</Button>
-            <Heading level={5}>Reports</Heading>
-            <Input
-                placeholder="Search by Title"
-                value={search}
-                onChange={value => setSearch(value)}
-                style={{ marginBottom: 10, display: "block" }}
-            />
+            <Modal open={open} onClose={handleClose} backdrop="static">
+                <Modal.Header>
+                    <Modal.Title>{editingId ? `Edit Report` : `Add Report`}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Stack direction='column' spacing={10} alignItems="stretch">
+                        <Input
+                            placeholder="Title"
+                            value={editTitle || title}
+                            onChange={value => editingId ? setEditTitle(value) : setTitle(value)}
+                        />
+                        <Input as="textarea" rows={3}
+                            placeholder="Content"
+                            value={editContent || content}
+                            onChange={value => editingId ? setEditContent(value) : setContent(value)}
+                        />
+                        <Button startIcon={<CreativeIcon />} onClick={handleGenerateAI} loading={loadingAI} appearance="primary" color="green">
+                            Generate with AI
+                        </Button>
+                    </Stack>
+                </Modal.Body>
+                <Modal.Footer>
+                    {editingId ? <Button onClick={() => handleEditSave(editingId)}>Save Report</Button> :
+                        <Button onClick={handleAdd}>Add Report</Button>}
+                    <Button onClick={handleClose} appearance="subtle">
+                        Cancel
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" style={{ margin: 20 }}>
+                <Button color="orange" startIcon={<PlusRoundIcon />} onClick={handleOpen} appearance="primary">New Report</Button>
 
-            <List sortable bordered>
+                <InputGroup >
+                    <InputGroup.Addon>
+                        <SearchIcon />
+                    </InputGroup.Addon>
+                    <Input
+                        placeholder="Search by Title"
+                        value={search}
+                        onChange={value => setSearch(value)}
+                    />
+                </InputGroup>
+            </Stack>
+
+            <Divider color="orange" style={{ margin: '40px 0' }}><Heading level={4} style={{ marginRight: 10 }}>Reports</Heading></Divider>
+
+            <List sortable bordered style={{ margin: 20 }}>
                 {filteredReports.map((report) => (
-                    <List.Item key={report.id} index={report.id}>
-                        {editingId === report.id ? (
-                            <Stack>
-                                <Input
-                                    value={editTitle}
-                                    onChange={e => setEditTitle(e)}
-                                    placeholder="Edit Title"
-                                    style={{ marginBottom: 5 }}
-                                />
-                                <Input
-                                    as="textarea"
-                                    rows={3}
-                                    value={editContent}
-                                    onChange={e => setEditContent(e)}
-                                    placeholder="Edit Content"
-                                />
-                                <Button onClick={() => handleEditSave(report.id)} appearance="primary" style={{ marginRight: 5 }}>Save</Button>
-                                <Button onClick={handleEditCancel} appearance="default">Cancel</Button>
-                            </Stack>
-                        ) : (
-                            <Stack direction='row'>
-                                <Heading level={5} >{report.title}</Heading>
-                                <Button appearance="primary" onClick={() => startEdit(report.id, report.title, report.content)} style={{ marginLeft: 10 }}>Edit</Button>
-                                <Button appearance="default" onClick={() => removeReport(report.id)} color="red" style={{ marginLeft: 5 }}>Delete</Button>
-                            </Stack>
-                        )}
-
+                    <List.Item key={report.id} index={report.id} style={{ padding: 10 }}>
+                        <Stack direction='row' justifyContent="space-between" alignItems="center">
+                            <Heading level={6} >{report.title}</Heading>
+                            <Stack direction='row' spacing={10}>
+                                <IconButton color="green" appearance="primary" icon={<EditIcon />} onClick={() => startEdit(report.id, report.title, report.content)} />
+                                <IconButton color="red" appearance="primary" icon={<TrashIcon />} onClick={() => removeReport(report.id)} /></Stack>
+                        </Stack>
                     </List.Item>
                 ))}
             </List>
-        </Container>
+
+        </Container >
     );
 };
 
