@@ -23,6 +23,7 @@ type ReportModalProps = {
     onAdd: () => void;
     onEditSave: () => void;
     onClose: () => void;
+    onContentChange: (content: string) => void;
 };
 
 const ReportModal: FC<ReportModalProps> = ({
@@ -42,6 +43,7 @@ const ReportModal: FC<ReportModalProps> = ({
     onAdd,
     onEditSave,
     onClose,
+    onContentChange,
 }) => (
     <Modal open={open} onClose={onClose} backdrop="static">
         <Modal.Header>
@@ -56,10 +58,11 @@ const ReportModal: FC<ReportModalProps> = ({
                 />
                 <Editor
                     apiKey={mceApiKey}
+                    value={editContent}
+                    onEditorChange={content => onContentChange(content)}
                     onInit={(_evt, editor) => {
                         onEditorInit(editor as TinyMCEEditorType);
                     }}
-                    initialValue={editContent}
                     init={{
                         height: 500,
                         menubar: false,
