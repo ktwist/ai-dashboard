@@ -108,7 +108,7 @@ const ReportModal: FC<ReportModalProps> = ({
             <Modal.Footer>
                 {!isViewer && (editingId ?
                     <Button startIcon={<SaveIcon />} color="blue" appearance="primary" onClick={onEditSave}>Save Report</Button> :
-                    <Button appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={onAdd}>Add Report</Button>
+                    <Button disabled={!title} appearance="primary" color="blue" startIcon={<PlusRoundIcon />} onClick={onAdd}>Add Report</Button>
                 )}
                 <Button onClick={onClose} appearance="subtle">
                     {isViewer ? "Close" : "Cancel"}
