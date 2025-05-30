@@ -73,7 +73,7 @@ const ReportModal: FC<ReportModalProps> = ({
                             onEditorInit(editor as TinyMCEEditorType);
                         }}
                         init={{
-                            height: 500,
+                            height: 300,
                             menubar: false,
                             plugins: [
                                 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
