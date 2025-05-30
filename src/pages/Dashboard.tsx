@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
 import ReportList from "../components/ReportList";
 import {
@@ -8,7 +7,7 @@ import {
   Stack,
   Button,
   Heading,
-
+  Navbar,
 } from 'rsuite';
 
 const Dashboard = () => {
@@ -17,7 +16,7 @@ const Dashboard = () => {
   return (
     <Container>
       <Header className="page-header">
-        <Stack direction='row' spacing={10} justifyContent="space-between" alignItems="center">
+        <Stack justifyContent="space-between" alignItems="center" color="white" style={{ padding: '2rem', backgroundColor: '#BBBBBB' }}>
           {role === "admin" ? (<Heading level={4}>Admin Dashboard</Heading>) : (
             <Heading level={4}>Viwer Dashboard</Heading>)}
           <Stack direction='row'>
