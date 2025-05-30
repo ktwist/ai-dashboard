@@ -2,7 +2,7 @@ import { generateReportContent } from "../api/openai";
 import { useState } from "react";
 import { useReportStore } from "../store/reportStore";
 import {
-    Container, Input, Heading, Button, List, Stack
+    Container, Input, Heading, Button, List, Stack, Modal
 } from 'rsuite';
 
 const ReportList = () => {
@@ -16,10 +16,12 @@ const ReportList = () => {
     const [loadingAI, setLoadingAI] = useState(false);
 
     const handleAdd = () => {
+        setEditingId(null);
         if (title && content) {
             addReport(title, content);
             setTitle("");
             setContent("");
+            handleClose()
         }
     };
 
@@ -27,6 +29,7 @@ const ReportList = () => {
         setEditingId(id);
         setEditTitle(currentTitle);
         setEditContent(currentContent);
+        handleOpen();
     };
 
     const handleEditSave = (id: number) => {
@@ -36,6 +39,7 @@ const ReportList = () => {
             setEditTitle("");
             setEditContent("");
         }
+        handleClose();
     };
 
     const handleEditCancel = () => {
@@ -45,15 +49,23 @@ const ReportList = () => {
     };
 
     const handleGenerateAI = async () => {
-        if (!title) return;
+        const promtText = editTitle || title;
+        if (!promtText) return;
         setLoadingAI(true);
         try {
-            const aiContent = await generateReportContent(title);
-            setContent(aiContent);
+            const aiContent = await generateReportContent(promtText);
+            editTitle ? setEditContent(aiContent) : setContent(aiContent);
         } catch (err) {
             alert("Failed to generate content.");
         }
         setLoadingAI(false);
+    };
+
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => {
+        handleEditCancel();
+        setOpen(false)
     };
 
     // Filter reports by title (case-insensitive)
@@ -62,22 +74,39 @@ const ReportList = () => {
     );
 
     return (
+
         <Container>
-            <Input
-                placeholder="Title"
-                value={title}
-                onChange={value => setTitle(value)}
-            />
-            <Input as="textarea" rows={3}
-                placeholder="Content"
-                value={content}
-                onChange={value => setContent(value)}
-            />
-            <Button onClick={handleAdd}>Add Report</Button>
-            <Button onClick={handleGenerateAI} loading={loadingAI} appearance="primary" style={{ marginLeft: 8 }}>
-                Generate with AI
-            </Button>
-            <Heading level={5}>Reports</Heading>
+            <Modal open={open} onClose={handleClose}>
+                <Modal.Header>
+                    <Modal.Title>{editingId ? `Edit Report` : `Add Report`}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Input
+                        placeholder="Title"
+                        value={editTitle || title}
+                        onChange={value => editingId ? setEditTitle(value) : setTitle(value)}
+                    />
+                    <Input as="textarea" rows={3}
+                        placeholder="Content"
+                        value={editContent || content}
+                        onChange={value => editingId ? setEditContent(value) : setContent(value)}
+                    />
+
+                    <Button onClick={handleGenerateAI} loading={loadingAI} appearance="primary" style={{ marginLeft: 8 }}>
+                        Generate with AI
+                    </Button>
+                    <Heading level={5}>Reports</Heading>
+                </Modal.Body>
+                <Modal.Footer>
+                    {editingId ? <Button onClick={() => handleEditSave(editingId)}>Save Report</Button> :
+                        <Button onClick={handleAdd}>Add Report</Button>}
+                    <Button onClick={handleClose} appearance="subtle">
+                        Cancel
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Button onClick={handleOpen}>New Report</Button>
+
             <Input
                 placeholder="Search by Title"
                 value={search}
@@ -88,32 +117,11 @@ const ReportList = () => {
             <List sortable bordered>
                 {filteredReports.map((report) => (
                     <List.Item key={report.id} index={report.id}>
-                        {editingId === report.id ? (
-                            <Stack>
-                                <Input
-                                    value={editTitle}
-                                    onChange={e => setEditTitle(e)}
-                                    placeholder="Edit Title"
-                                    style={{ marginBottom: 5 }}
-                                />
-                                <Input
-                                    as="textarea"
-                                    rows={3}
-                                    value={editContent}
-                                    onChange={e => setEditContent(e)}
-                                    placeholder="Edit Content"
-                                />
-                                <Button onClick={() => handleEditSave(report.id)} appearance="primary" style={{ marginRight: 5 }}>Save</Button>
-                                <Button onClick={handleEditCancel} appearance="default">Cancel</Button>
-                            </Stack>
-                        ) : (
-                            <Stack direction='row'>
-                                <Heading level={5} >{report.title}</Heading>
-                                <Button appearance="primary" onClick={() => startEdit(report.id, report.title, report.content)} style={{ marginLeft: 10 }}>Edit</Button>
-                                <Button appearance="default" onClick={() => removeReport(report.id)} color="red" style={{ marginLeft: 5 }}>Delete</Button>
-                            </Stack>
-                        )}
-
+                        <Stack direction='row'>
+                            <Heading level={5} >{report.title}</Heading>
+                            <Button appearance="primary" onClick={() => startEdit(report.id, report.title, report.content)} style={{ marginLeft: 10 }}>Edit</Button>
+                            <Button appearance="default" onClick={() => removeReport(report.id)} color="red" style={{ marginLeft: 5 }}>Delete</Button>
+                        </Stack>
                     </List.Item>
                 ))}
             </List>
