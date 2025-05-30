@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useReportStore } from "../store/reportStore";
 // import { useAuth } from "../context/AuthContext";
 import {
-    Container, Input, Heading, Button, List, Stack, Modal, IconButton, Panel
+    Container, Input, Heading, Button, List, Stack, Modal, IconButton, Panel, InputGroup, Divider
 } from 'rsuite';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import CreativeIcon from '@rsuite/icons/Creative';
+import SearchIcon from '@rsuite/icons/Search';
+import PlusRoundIcon from '@rsuite/icons/PlusRound';
 
 const ReportList = () => {
     const { reports, addReport, removeReport, editReport } = useReportStore();
@@ -111,30 +113,36 @@ const ReportList = () => {
                 </Modal.Footer>
             </Modal>
             <Stack direction="row" justifyContent="space-between" alignItems="center" style={{ margin: 20 }}>
-                <Button color="orange" onClick={handleOpen} appearance="primary">New Report</Button>
-                <Input
-                    placeholder="Search by Title"
-                    value={search}
-                    onChange={value => setSearch(value)}
-                    style={{ marginBottom: 10, display: "block" }}
-                />
+                <Button color="orange" startIcon={<PlusRoundIcon />} onClick={handleOpen} appearance="primary">New Report</Button>
+
+                <InputGroup >
+                    <InputGroup.Addon>
+                        <SearchIcon />
+                    </InputGroup.Addon>
+                    <Input
+                        placeholder="Search by Title"
+                        value={search}
+                        onChange={value => setSearch(value)}
+                    />
+                </InputGroup>
             </Stack>
 
-            <Panel header="Reports" bordered >
-                <List sortable bordered>
-                    {filteredReports.map((report) => (
-                        <List.Item key={report.id} index={report.id}>
-                            <Stack direction='row' justifyContent="space-between" alignItems="center">
-                                <Heading level={5} >{report.title}</Heading>
-                                <Stack direction='row' spacing={10}>
-                                    <IconButton color="green" appearance="primary" icon={<EditIcon />} onClick={() => startEdit(report.id, report.title, report.content)} />
-                                    <IconButton color="red" appearance="primary" icon={<TrashIcon />} onClick={() => removeReport(report.id)} /></Stack>
-                            </Stack>
-                        </List.Item>
-                    ))}
-                </List>
-            </Panel>
-        </Container>
+            <Divider color="orange" style={{ margin: '40px 0' }}><Heading level={4} style={{ marginRight: 10 }}>Reports</Heading></Divider>
+
+            <List sortable bordered style={{ margin: 20 }}>
+                {filteredReports.map((report) => (
+                    <List.Item key={report.id} index={report.id} style={{ padding: 10 }}>
+                        <Stack direction='row' justifyContent="space-between" alignItems="center">
+                            <Heading level={6} >{report.title}</Heading>
+                            <Stack direction='row' spacing={10}>
+                                <IconButton color="green" appearance="primary" icon={<EditIcon />} onClick={() => startEdit(report.id, report.title, report.content)} />
+                                <IconButton color="red" appearance="primary" icon={<TrashIcon />} onClick={() => removeReport(report.id)} /></Stack>
+                        </Stack>
+                    </List.Item>
+                ))}
+            </List>
+
+        </Container >
     );
 };
 
